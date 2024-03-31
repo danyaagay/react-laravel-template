@@ -1,7 +1,5 @@
-# базовый образ для PHP с поддержкой Laravel
 FROM php:8.2-fpm
 
-# установка необходимых пакетов
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -10,24 +8,17 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && docker-php-ext-install pdo_mysql zip mbstring
 
-# установка Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# добавление расширений PHP
 RUN pecl install redis && docker-php-ext-enable redis
 
-# установка Laravel
 WORKDIR /var/www/api
-COPY api/composer.json .
-COPY api/composer.lock .
-RUN composer install --no-dev --prefer-dist --no-scripts --no-progress --no-interaction
 
-# установка зависимостей Laravel
-COPY api .
+COPY api/ /var/www/api
 
-# Copy existing application directory permissions
-RUN chown -R www-data:www-data /var/www/api
+RUN composer install --prefer-dist --no-interaction
 
-# запуск Laravel
+RUN chown -R www-data:www-data /var/www/api/storage
+
 EXPOSE 9000
 CMD ["php-fpm"]
